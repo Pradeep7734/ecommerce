@@ -13,18 +13,3 @@ class CartView(APIView):
 
     permission_classes = [IsCustomer]
 
-    def post(self, request):
-        print("In views")
-        serializer = CartSerializer(data=request.data, context={"request": request})
-        print("Second views")
-        if not serializer.is_valid():
-            return Response(
-                serializer.errors,
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        
-        print("11111")
-        serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-

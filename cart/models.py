@@ -1,13 +1,15 @@
 from django.db import models
 from user.models import User
 from products.models import Products
+from common.models import Common
 
 # Create your models here.
-class Cart(models.Model):
+class Cart(Common):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    total_products = models.FloatField(default=0)
-    final_amount = models.FloatField(default=0.0)
+    total_amount = models.FloatField(default=0.0)
+    total_product = models.FloatField(default=0)
+
 
 
 class CartItems(models.Model):

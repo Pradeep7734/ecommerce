@@ -1,67 +1,21 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 from .models import ProductCategory, Products
 from .serializer import ProductCategorySerailizer, ProductSerializer
 from common.authentication import JWTAuthentication
-from common.permissions import IsVendorOrReadOnly
+from common.permissions import IsAdminOrReadOnly, IsVendorOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
 
 # Create your views here.
 
-class ProductCategoryView(APIView):
+class ProductCategoryViewSet(ModelViewSet):
 
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsVendorOrReadOnly]
-
-    def post(self, request):
-        serializer = ProductCategorySerailizer(data=request.data, context={'request':request})
-
-        if not serializer.is_valid():
-            return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
-        
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-
-    def delete(self, request, pk):
-        try:
-            category = ProductCategory.objects.get(pk=pk)
-            category.delete()
-            return Response(
-                {
-                    "message": f"{category.name} Deleted successfully."
-                },
-                status=status.HTTP_200_OK
-            )
-        except ProductCategory.DoesNotExist:
-            return Response(
-            {"error": "Category not found"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-    
-    def get(self, request, pk=None):
-        if pk:
-            try:
-                category = ProductCategory.objects.get(pk=pk)
-                serializer = ProductCategorySerailizer(category)
-                return Response(
-                    serializer.data, status=status.HTTP_200_OK
-                )
-                
-            except ProductCategory.DoesNotExist:
-                return Response(
-                    {
-                        "message": "Category does not exists."
-                    }, status=status.HTTP_400_BAD_REQUEST
-                )
-            
-        else:
-            categories = ProductCategory.objects.all()
-            serializer = ProductCategorySerailizer(categories, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+    permission_classes = [IsAdminOrReadOnly]
+    queryset = ProductCategory.objects.all()
+    serializer_class = ProductCategorySerailizer
 
 
 

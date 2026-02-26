@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import User, Profile
+from cart.models import Cart
 from django.db import transaction
 from django.contrib.auth.hashers import make_password, check_password
 from common.models import JWTHandler
@@ -25,9 +26,15 @@ class RegisterUserSerializer(serializers.Serializer):
             Profile.objects.create(
                 first_name = validated_data['first_name'],
                 last_name = validated_data['last_name'],
-                user_id = user,
-                
+                user_id = user,  
             )
+
+            Cart.objects.create(
+                user = user,
+                total_amount = 0.0,
+                total_product = 0
+            )
+
 
             return {
                 "token": JWTHandler.encode_jwt

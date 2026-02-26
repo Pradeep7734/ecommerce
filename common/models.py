@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 class Common(models.Model):
 
-    created_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
