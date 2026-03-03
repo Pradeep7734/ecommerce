@@ -19,56 +19,20 @@ class ProductCategoryViewSet(ModelViewSet):
 
 
 
-class ProductsView(APIView):
+class ProductsView(ModelViewSet):
 
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsVendorOrReadOnly]
+    queryset = Products.objects.all()
+    serializer_class = ProductSerializer
 
-    def post(self, request):
+    def perform_create(self, serializer):
+        serializer.save(vendor=self.request.user)
 
-        serializer = ProductSerializer(data=request.data, context={"request":request})
+    def get_queryset(self):
+        user = self.request.user
 
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-
-    def delete(self, request, pk):
-        try:
-            product = Products.objects.get(pk=pk)
-            product.delete()
-            return Response({
-                "message": f"{product.name} deleted successfully."
-            }, status=status.HTTP_200_OK)
-        except Products.DoesNotExist:
-            return Response({
-                "message": "Product not found."
-            }, status=status.HTTP_404_NOT_FOUND)
-        
-    
-    def get(self, request, pk=None):
-        if pk:
-            try:
-                product = Products.objects.get(pk=pk)
-                serializer = ProductSerializer(product)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            except Products.DoesNotExist:
-                return Response({
-                "message": "Product not found."
-            }, status=status.HTTP_404_NOT_FOUND)
-        else:
-            search = request.query_params.get("search")
-            products = Products.objects.all()
-            print(f"Products: {products}")
-
-            if search:
-                products = products.filter(
-                    Q(name_icontains=search),
-                    Q(description_icontains=search),
-                    Q(category_name_icontains=search),
-                )
-            serializer = ProductSerializer(products, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        if user.profile_type == "V":
+            products = Products.objects.filter(vendor=user)
+            return products
+        return super().get_queryset()

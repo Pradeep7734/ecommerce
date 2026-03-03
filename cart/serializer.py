@@ -1,46 +1,44 @@
+import logging
 from rest_framework import serializers
 from products.models import Products
-from user.models import User
-from .models import Cart, CartItems
+from .models import CartItems, Cart
+from django.db.models import F
+from django.db import transaction
 
-class CartSerializer(serializers.Serializer):
+logger = logging.getLogger(__name__)
 
-    product = serializers.IntegerField()
-    is_added = serializers.BooleanField()
+class CartItemsSerializer(serializers.Serializer):
+
+    product_id = serializers.IntegerField()
 
     def create(self, validated_data):
-        try:
-            product_obj = Products.objects.get(pk=int(validated_data['product']))
-            user_obj = self.context["request"].user
-            # searching existing cart for the user
-            existing_cart, is_new_cart = Cart.objects.get_or_create(user=user_obj)
+        user_obj = self.context['request'].user
+        logger.info(f"User: {user_obj}")
 
-            existing_cart_item, is_new_cart_item = CartItems.objects.get_or_create(cart=existing_cart, product=product_obj)
+        logger.info("CartItemsSerializer create called")
+        logger.debug(f"Got data : {validated_data}")
 
-            if is_new_cart_item:
-                if not validated_data['is_added']:
-                    raise serializers.ValidationError("Cart cannot be in negative")
-                
-                existing_cart_item = CartItems.objects.create(
-                    cart = existing_cart,
-                    product = product_obj,
-                    price = product_obj.sale_price,
-                    quantity = 1
+        product = Products.objects.filter(id=validated_data['product_id'], is_active=True).first()
+        logger.info(f"Fetched product from db: {product}")
+
+        if not product:
+            raise serializers.ValidationError(f"Product not found.")
+
+        with transaction.atomic():
+
+            cart, _ = Cart.objects.get_or_create(user=user_obj)
+            logger.info(f"Cart: {cart}")
+
+            cart_item, cart_item_created = CartItems.objects.update_or_create(
+                cart = cart,
+                product = product,
+                defaults={"quantity": 1}
+            )
+
+            if cart_item_created:
+                Cart.objects.filter(id=cart.id).update(
+                    total_product = F("total_product") + 1
                 )
-            else:
-                current_quantity = existing_cart_item.quantity
-                current_price = existing_cart_item.price
-                existing_cart_item.objects.update(
-                    quantity = current_quantity + 1 if validated_data['is_added'] else current_quantity - 1,
-                    price = current_price + product_obj.sale_price
-                )
 
-            return existing_cart_item
+        return cart_item
 
-        except Products.DoesNotExist:
-            raise serializers.ValidationError("Product does not exist")
-        except Exception as e:
-            raise serializers.ValidationError(f"Error occurred: {e}")
-
-        
-        

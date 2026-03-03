@@ -7,8 +7,7 @@ from common.models import Common
 class Cart(Common):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    total_amount = models.FloatField(default=0.0)
-    total_product = models.FloatField(default=0)
+    total_product = models.DecimalField(default=0, decimal_places=2)
 
 
 
@@ -16,5 +15,12 @@ class CartItems(models.Model):
 
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
-    price = models.FloatField()
-    quantity = models.FloatField()
+    quantity = models.IntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['cart', 'product'],
+                name = 'unique_cart_product'
+            )
+        ]
