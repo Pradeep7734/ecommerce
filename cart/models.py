@@ -7,7 +7,7 @@ from common.models import Common
 class Cart(Common):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    total_product = models.DecimalField(default=0, decimal_places=2)
+    total_product = models.DecimalField(max_digits=3, decimal_places=2)
 
 
 

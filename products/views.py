@@ -8,6 +8,7 @@ from common.permissions import IsAdminOrReadOnly, IsVendorOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
+from django.db import connection
 
 # Create your views here.
 
@@ -33,6 +34,8 @@ class ProductsView(ModelViewSet):
         user = self.request.user
 
         if user.profile_type == "V":
-            products = Products.objects.filter(vendor=user)
-            return products
+            return Products.objects.filter(vendor=user)
+        
         return super().get_queryset()
+
+    
