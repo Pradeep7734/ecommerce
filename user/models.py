@@ -1,19 +1,12 @@
 from django.db import models
 from common.models import Common
+from utility_folder.user_type import USER_PROFILE_TYPE
 
 # Create your models here.
 class User(Common):
 
-    email = models.EmailField(max_length=255, unique=True)
-    phone_number = models.CharField(max_length=18, unique=True)
-    password = models.CharField(max_length=250)
-    profile_type = models.CharField(choices=(
-        ('C', 'Customer'),
-        ('V', 'Vendor'),
-    ))
-    
-    class Meta:
-        unique_together = ['email', 'phone_number']
+    login = models.CharField(max_length=255, unique=True)
+    profile_type = models.CharField(choices=USER_PROFILE_TYPE)
         
 
 
